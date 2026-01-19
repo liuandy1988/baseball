@@ -6,145 +6,131 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="棒球戰術板">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>棒球戰術板 V16.0 (右側欄位版)</title>
+    
+    <title>棒球戰術板</title>
+    
     <link rel="apple-touch-icon" href="https://via.placeholder.com/192.png?text=Baseball">
 
     <style>
-        /* 全域設定 */
+        /* 全域設定：防止選取文字、防止回彈、優化觸控 */
         body { 
             font-family: "微軟正黑體", sans-serif; 
             text-align: center; 
             background-color: #222; 
             color: white; 
-            margin: 0; padding: 0;
-            overflow: hidden; 
-            touch-action: none; 
-            user-select: none; -webkit-user-select: none;
-            height: 100vh; width: 100vw;
+            margin: 0; 
+            padding: 0;
+            overflow: hidden; /* 禁止捲動 */
+            touch-action: none; /* 禁止瀏覽器預設觸控行為 */
+            user-select: none; /* 禁止選取文字 */
+            -webkit-user-select: none;
+            height: 100vh;
+            width: 100vw;
         }
         
-        /* 1. 頂部選單列 */
+        /* 頂部選單列 */
         #top-bar { 
-            position: absolute; top: 0; left: 0; right: 0; height: 50px; 
+            position: absolute; top: 0; width: 100%; height: 60px; 
             background: #333; z-index: 200; 
             display: flex; align-items: center; justify-content: center; 
             box-shadow: 0 2px 5px rgba(0,0,0,0.5);
         }
         select { 
-            font-size: 1.1rem; padding: 5px; border-radius: 8px; 
-            max-width: 95%; background: #fff; border: none; font-weight: bold;
+            font-size: 1.2rem; padding: 8px; border-radius: 8px; 
+            max-width: 90%; background: #fff; border: none; font-weight: bold;
         }
 
-        /* 2. 右側控制列 (新版面核心) */
-        #controls { 
-            position: absolute; 
-            top: 50px; /* 避開 Top Bar */
-            right: 0; 
-            bottom: 0; 
-            width: 130px; /* 固定寬度 */
-            background: rgba(0,0,0,0.9); 
-            border-left: 1px solid #555;
-            z-index: 200; 
-            display: flex; 
-            flex-direction: column; /* 垂直排列 */
-            align-items: center;
-            padding: 10px 5px;
-            overflow-y: auto; /* 如果按鈕太多可捲動 */
-        }
-
-        /* 3. 球場容器 (自動計算剩餘空間) */
-        #game-container {
-            position: absolute;
-            top: 50px; left: 0; bottom: 0;
-            right: 130px; /* 留出右邊空間給側欄 */
-            display: flex; align-items: center; justify-content: center;
-            overflow: hidden;
-            background-color: #222;
-        }
-
-        /* 球場本體 */
+        /* 球場區域 */
         #game-area { 
             position: relative; 
-            /* 讓球場在剩餘空間內盡可能大，但不超出邊界 */
-            width: 95vmin; height: 95vmin; 
-            max-width: 100%; max-height: 100%;
-            background-color: #4CAF50; 
+            width: 100vmin; height: 100vmin; 
+            margin: 0 auto; 
+            background-color: #4CAF50; /* 草皮綠 */
             background-image: repeating-linear-gradient(0deg, transparent, transparent 19px, rgba(255,255,255,0.1) 20px);
             border: 2px solid white; 
-            box-sizing: border-box;
+            overflow: hidden; 
+            top: 40px; /* 稍微避開上方選單 */
         }
         
-        /* 紅土與壘包 */
+        /* 紅土區 */
         .infield-dirt {
-            position: absolute; top: 54%; left: 50%; width: 25%; height: 25%;
+            position: absolute; top: 54%; left: 50%; width: 25vmin; height: 25vmin;
             background-color: #A0522D; transform: translate(-50%, -50%) rotate(45deg);
-            z-index: 0; box-shadow: 0 0 10px rgba(0,0,0,0.3); border-radius: 5px; 
+            z-index: 0; box-shadow: 0 0 10px rgba(0,0,0,0.3);
+            border-radius: 5px; 
         }
+
+        /* 本壘板 */
         .home-plate {
-            position: absolute; width: 5.5%; height: 5.5%; background: white;
+            position: absolute; width: 5.5vmin; height: 5.5vmin; background: white;
             clip-path: polygon(0 0, 100% 0, 100% 60%, 50% 100%, 0 60%);
             z-index: 2; top: 70%; left: 50%; transform: translate(-50%, -50%);
         }
-        .base { position: absolute; width: 4%; height: 4%; background: white; transform: rotate(45deg); z-index: 2; box-shadow: 2px 2px 5px rgba(0,0,0,0.3); }
-        .foul-line { position: absolute; background: white; height: 3px; width: 120%; transform-origin: 0 0; z-index: 1; opacity: 0.9; }
 
-        /* 球員與跑者 */
+        /* 壘包 */
+        .base { position: absolute; width: 4vmin; height: 4vmin; background: white; transform: rotate(45deg); z-index: 2; box-shadow: 2px 2px 5px rgba(0,0,0,0.3); }
+        
+        /* 守備員 */
         .player {
-            width: 6%; height: 6%; /* 改用百分比以適應縮放 */
-            border-radius: 50%; background-color: white; color: black; border: 2px solid #2196F3;
+            width: 6vmin; height: 6vmin;
+            border-radius: 50%;
+            background-color: white; color: black; border: 0.4vmin solid #2196F3;
             font-weight: bold; display: flex; align-items: center; justify-content: center;
-            position: absolute; z-index: 20; cursor: grab; font-size: 2.2vmin;
-            box-shadow: 2px 2px 5px rgba(0,0,0,0.6); transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); 
+            position: absolute; z-index: 20; cursor: grab;
+            font-size: 2vmin;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.6);
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); 
         }
         .player:active { transform: scale(1.2); cursor: grabbing; border-color: yellow;}
+
+        /* 跑壘員 */
         .runner {
-            width: 5%; height: 5%;
-            border-radius: 50%; background-color: #FF5722; color: white; border: 2px solid white;
+            width: 5vmin; height: 5vmin;
+            border-radius: 50%;
+            background-color: #FF5722; 
+            color: white; border: 2px solid white;
             font-weight: bold; display: flex; align-items: center; justify-content: center;
-            position: absolute; z-index: 18; font-size: 2vmin;
-            box-shadow: 1px 1px 3px rgba(0,0,0,0.5); pointer-events: none; 
+            position: absolute; z-index: 18;
+            font-size: 2vmin;
+            box-shadow: 1px 1px 3px rgba(0,0,0,0.5);
+            pointer-events: none; 
         }
-        .player.correct { background-color: #4CAF50; border-color: white; }
-        .player.wrong { background-color: #F44336; border-color: darkred; color: white;}
+
+        .foul-line { position: absolute; background: white; height: 3px; width: 120%; transform-origin: 0 0; z-index: 1; opacity: 0.9; }
+        .player.correct { background-color: #4CAF50; color: white; border-color: white; box-shadow: 0 0 10px #fff; }
+        .player.wrong { background-color: #F44336; color: white; border-color: darkred; }
         
         #ball {
-            width: 2.5%; height: 2.5%; border-radius: 50%;
+            width: 2.5vmin; height: 2.5vmin; border-radius: 50%;
             background-color: yellow; border: 1px solid red;
             position: absolute; z-index: 15; display: none;
             box-shadow: 0 0 10px yellow;
         }
 
-        /* 按鈕樣式調整 (垂直排列) */
-        #free-controls, #std-controls { width: 100%; display: flex; flex-direction: column; align-items: center; }
-        #free-controls { display: none; margin-bottom: 10px; border-bottom: 1px solid #555; padding-bottom: 10px; }
+        /* 控制列 */
+        #controls { 
+            position: absolute; bottom: 0; width: 100%; 
+            background: rgba(0,0,0,0.85); 
+            padding: 15px; box-sizing: border-box; z-index: 100; 
+            display: flex; flex-direction: column; align-items: center;
+            border-top: 1px solid #555;
+            padding-bottom: 25px; 
+        }
         
-        .btn-runner { 
-            background-color: #444; color: #ccc; font-size: 0.9rem; 
-            padding: 8px; width: 90%; margin: 3px 0; 
-            border-radius: 8px; border: 1px solid #666; transition: 0.2s;
-        }
-        .btn-runner.active { background-color: #FF5722; color: white; border-color: white; }
+        #free-controls { display: none; margin-bottom: 8px; }
+        .btn-runner { background-color: #444; color: #ccc; font-size: 1rem; padding: 8px 15px; margin: 0 5px; border-radius: 20px; border: 1px solid #666; transition: 0.2s;}
+        .btn-runner.active { background-color: #FF5722; color: white; border-color: white; transform: scale(1.05); }
 
-        button { 
-            font-size: 1rem; padding: 12px; width: 90%; 
-            border-radius: 10px; border: none; cursor: pointer; margin: 5px 0; 
-            font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.3); 
-        }
+        #std-controls { display: block; }
+        button { font-size: 1.1rem; padding: 10px 18px; border-radius: 12px; border: none; cursor: pointer; margin: 5px; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.3); }
         button:active { transform: translateY(2px); }
         
         .btn-check { background-color: #FFC107; color: black; }
         .btn-answer { background-color: #03A9F4; color: white; }
         .btn-reset { background-color: #9E9E9E; color: white; }
         
-        #message { 
-            margin-top: auto; /* 推到底部 */
-            margin-bottom: 10px; font-size: 1rem; text-align: center;
-            color: #FFC107; font-weight: bold; padding: 5px;
-        }
-        #scenario-desc { 
-            font-size: 0.85rem; color: #ddd; margin-bottom: 15px; 
-            text-align: center; line-height: 1.4; padding: 0 5px;
-        }
+        #message { margin-bottom: 8px; font-size: 1.1rem; min-height: 1.2em; color: #FFC107; font-weight: bold; text-shadow: 1px 1px 2px black; }
+        #scenario-desc { font-size: 0.95rem; color: #ddd; margin-bottom: 8px; letter-spacing: 1px;}
     </style>
 </head>
 <body>
@@ -164,48 +150,44 @@
     </select>
 </div>
 
-<div id="game-container">
-    <div id="game-area">
-        <div class="foul-line" style="top:70%; left:50%; transform: rotate(-135deg);"></div>
-        <div class="foul-line" style="top:70%; left:50%; transform: rotate(-45deg);"></div>
-        <div class="infield-dirt"></div>
-        <div class="home-plate"></div>
-        <div class="base" style="top:54%; left:66%;"></div> <div class="base" style="top:38%; left:50%; transform: translate(-50%, -50%) rotate(45deg);"></div> <div class="base" style="top:54%; left:34%;"></div> <div id="ball"></div>
-        <div id="runners-container"></div>
+<div id="game-area">
+    <div class="foul-line" style="top:70%; left:50%; transform: rotate(-135deg);"></div>
+    <div class="foul-line" style="top:70%; left:50%; transform: rotate(-45deg);"></div>
+    <div class="infield-dirt"></div>
+    <div class="home-plate"></div>
+    <div class="base" style="top:54%; left:66%;"></div> <div class="base" style="top:38%; left:50%; transform: translate(-50%, -50%) rotate(45deg);"></div> <div class="base" style="top:54%; left:34%;"></div> <div id="ball"></div>
+    <div id="runners-container"></div>
 
-        <div class="player" id="P" data-role="P">P</div>
-        <div class="player" id="C" data-role="C">C</div>
-        <div class="player" id="1B" data-role="1B">1B</div>
-        <div class="player" id="2B" data-role="2B">2B</div>
-        <div class="player" id="3B" data-role="3B">3B</div>
-        <div class="player" id="SS" data-role="SS">SS</div>
-        <div class="player" id="LF" data-role="LF">LF</div>
-        <div class="player" id="CF" data-role="CF">CF</div>
-        <div class="player" id="RF" data-role="RF">RF</div>
-    </div>
+    <div class="player" id="P" data-role="P">P</div>
+    <div class="player" id="C" data-role="C">C</div>
+    <div class="player" id="1B" data-role="1B">1B</div>
+    <div class="player" id="2B" data-role="2B">2B</div>
+    <div class="player" id="3B" data-role="3B">3B</div>
+    <div class="player" id="SS" data-role="SS">SS</div>
+    <div class="player" id="LF" data-role="LF">LF</div>
+    <div class="player" id="CF" data-role="CF">CF</div>
+    <div class="player" id="RF" data-role="RF">RF</div>
 </div>
 
 <div id="controls">
     <div id="scenario-desc">說明...</div>
+    <div id="message">請拖曳球員到正確位置</div>
     
     <div id="free-controls">
-        <button class="btn-runner" id="btn-r1" onclick="toggleRunner('R1')">R1 (一壘)</button>
-        <button class="btn-runner" id="btn-r2" onclick="toggleRunner('R2')">R2 (二壘)</button>
-        <button class="btn-runner" id="btn-r3" onclick="toggleRunner('R3')">R3 (三壘)</button>
+        <button class="btn-runner" id="btn-r1" onclick="toggleRunner('R1')">一壘有跑者</button>
+        <button class="btn-runner" id="btn-r2" onclick="toggleRunner('R2')">二壘有跑者</button>
+        <button class="btn-runner" id="btn-r3" onclick="toggleRunner('R3')">三壘有跑者</button>
     </div>
 
     <div id="std-controls">
         <button class="btn-check" id="btn-check" onclick="checkPositions()">檢查補位</button>
         <button class="btn-answer" id="btn-answer" onclick="showAnswer()">偷看答案</button>
+        <button class="btn-reset" onclick="resetCurrent()">重置位置</button>
     </div>
-    
-    <button class="btn-reset" onclick="resetCurrent()">重置位置</button>
-    
-    <div id="message">請拖曳球員</div>
 </div>
 
 <script>
-    // === 戰術資料庫 (維持 V13.0 修正後的內容) ===
+    // === 戰術資料庫 ===
     const scenarios = {
         'play1': {
             desc: "1. 游擊滾地球，傳一壘刺殺。",
@@ -395,13 +377,15 @@
 
         // UI切換
         if (currentScenario === 'free_mode') {
-            document.getElementById('free-controls').style.display = 'flex';
-            document.getElementById('std-controls').style.display = 'none';
+            document.getElementById('free-controls').style.display = 'block';
+            document.getElementById('btn-check').style.display = 'none';
+            document.getElementById('btn-answer').style.display = 'none';
             document.getElementById('ball').style.display = 'none';
             renderFreeRunners();
         } else {
             document.getElementById('free-controls').style.display = 'none';
-            document.getElementById('std-controls').style.display = 'flex';
+            document.getElementById('btn-check').style.display = 'inline-block';
+            document.getElementById('btn-answer').style.display = 'inline-block';
             const ball = document.getElementById('ball');
             ball.style.display = 'block';
             ball.style.top = data.ballPos.top + '%';
@@ -559,7 +543,7 @@
     function drag(e) {
         if (draggedElement) {
             e.preventDefault();
-            const gameArea = document.getElementById('game-area'); // 限制在球場內
+            const gameArea = document.getElementById('game-area');
             let clientX, clientY;
             if (e.type === "touchmove") {
                 clientX = e.touches[0].clientX;
@@ -568,12 +552,10 @@
                 clientX = e.clientX;
                 clientY = e.clientY;
             }
-            
-            // 計算相對於 game-area 的百分比位置
             let newLeft = ((clientX - xOffset - gameArea.getBoundingClientRect().left) / gameArea.offsetWidth) * 100;
             let newTop = ((clientY - yOffset - gameArea.getBoundingClientRect().top) / gameArea.offsetHeight) * 100;
             
-            // 邊界檢查 (0 ~ 94%)
+            // 邊界檢查防止拖出界
             newLeft = Math.max(0, Math.min(newLeft, 94));
             newTop = Math.max(0, Math.min(newTop, 94));
             
